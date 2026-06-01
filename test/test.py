@@ -152,10 +152,120 @@ async def test_spi(dut):
 @cocotb.test()
 async def test_pwm_freq(dut):
     # Write your test here
+    dut._log.info("Start PWM freq test")
+
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # enable output channel 
+    await send_spi_transaction(dut, 1, 0x00, 0x01) 
+    # enable pwm channel
+    await send_spi_transaction(dut, 1, 0x02, 0x01) 
+    # set duty cycle  
+    await send_spi_transaction(dut, 1, 0x04, 0x0F) 
+
+    # skip first frame, bc might be in the middle of a pwm cycle
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    while (int(dut.uo_out.value) & 1) == 1:
+        await RisingEdge(dut.clk)
+    
+    # start measuring
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    t_rising_edge1 = cocotb.utils.get_sim_time(unit="sec")
+    dut._log.info("first rising edge detected")
+
+    # wait for signal to go low, then take measurement at the next rising edge
+    while (int(dut.uo_out.value) & 1) == 1:
+        await RisingEdge(dut.clk)
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    t_rising_edge2 = cocotb.utils.get_sim_time(unit="sec")
+    dut._log.info("second rising edge detected")
+
+    period = t_rising_edge2 - t_rising_edge1
+    freq = 1 / period
+    assert 2970 <= freq <= 3030, f"Expected 2970-3030Hz, got{freq}"
     dut._log.info("PWM Frequency test completed successfully")
 
 
 @cocotb.test()
 async def test_pwm_duty(dut):
     # Write your test here
+    dut._log.info("Starting pwm duty cycle test")
+
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    # enable output channel 0
+    await send_spi_transaction(dut, 1, 0x00, 0x01) 
+    # enable pwm channel 0
+    await send_spi_transaction(dut, 1, 0x02, 0x01) 
+
+    # test 50% duty cycle
+    await send_spi_transaction(dut, 1, 0x04, 0x80)  
+
+    # skip first frame, bc might be in the middle of a pwm cycle
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    while (int(dut.uo_out.value) & 1) == 1:
+        await RisingEdge(dut.clk)
+
+    # wait for rising edge
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    t_rising_edge1 = cocotb.utils.get_sim_time(unit="sec")
+
+    # wait for falling edge
+    while (int(dut.uo_out.value) & 1) == 1:
+        await RisingEdge(dut.clk)
+    t_falling_edge = cocotb.utils.get_sim_time(unit="sec")
+
+     # wait for 2nd rising edge
+    while (int(dut.uo_out.value) & 1) == 0:
+        await RisingEdge(dut.clk)
+    t_rising_edge2 = cocotb.utils.get_sim_time(unit="sec")
+
+    high_time = t_falling_edge - t_rising_edge1
+    period = t_rising_edge2 - t_rising_edge1
+    duty_cycle = (high_time / period) * 100
+    assert int(duty_cycle) == 50, f"Expected 50% duty cycle, got {duty_cycle}"
+
+    # test 0% duty cycle
+    await send_spi_transaction(dut, 1, 0x04, 0x00)
+    await ClockCycles(dut.clk, 30000)  # wait for long enough time
+    assert (int(dut.uo_out.value) & 1) == 0, "Expected always low for 0% duty"
+
+    # test 100% duty cycle
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)
+    await ClockCycles(dut.clk, 30000) # wait for long enough time
+    assert (int(dut.uo_out.value) & 1) == 1, "Expected always high for 100% duty"
+
     dut._log.info("PWM Duty Cycle test completed successfully")

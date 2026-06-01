@@ -36,6 +36,20 @@ module tt_um_uwasic_onboarding_kris (
     .pwm_duty_cycle(pwm_duty_cycle),
     .out({uio_out, uo_out})
   );
+
+  spi_module spi_module_inst (
+    .COPI(ui_in[1]),
+    .nCS(ui_in[2]),
+    .SCLK(ui_in[0]),
+    .clk(clk),
+    .rst_n(rst_n),
+    .en_reg_out_7_0(en_reg_out_7_0),
+    .en_reg_out_15_8(en_reg_out_15_8),
+    .en_reg_pwm_7_0(en_reg_pwm_7_0),
+    .en_reg_pwm_15_8(en_reg_pwm_15_8),
+    .pwm_duty_cycle(pwm_duty_cycle)
+  );
+  
   // Add uio_in and ui_in[7:3] to the list of unused signals:
   wire _unused = &{ena, ui_in[7:3], uio_in, 1'b0};
 
