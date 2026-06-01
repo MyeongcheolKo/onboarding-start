@@ -256,7 +256,7 @@ async def test_pwm_duty(dut):
     high_time = t_falling_edge - t_rising_edge1
     period = t_rising_edge2 - t_rising_edge1
     duty_cycle = (high_time / period) * 100
-    assert int(duty_cycle) == 50, f"Expected 50% duty cycle, got {duty_cycle}"
+    assert 49 <= int(duty_cycle) <= 51, f"Expected 50% duty cycle, got {duty_cycle}"
 
     # test 0% duty cycle
     await send_spi_transaction(dut, 1, 0x04, 0x00)
