@@ -9,12 +9,12 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+SPI-controlled PWM peripheral for Tiny Tapeout. An SPI peripheral receives 16-bit write transactions (1 R/W bit + 7 address bits + 8 data bits) using SPI Mode 0. It writes to five registers that control 16 output channels: output enable, PWM enable, and a shared duty cycle. A PWM module generates a 3 kHz signal with configurable duty cycle (0-100%). SPI signals are synchronized to the system clock using 2-stage flip-flop chains to prevent metastability.
 
 ## How to test
 
-Explain how to use your project
+Send SPI transactions to configure registers. Write to 0x00/0x01 to enable outputs, 0x02/0x03 to enable PWM mode, and 0x04 to set the duty cycle (0x00 = 0%, 0xFF = 100%). Outputs appear on uo_out[7:0] and uio_out[7:0].
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+SPI controller (e.g. microcontroller) connected to ui_in[0] (SCLK), ui_in[1] (COPI), ui_in[2] (nCS). LEDs or other loads on uo_out and uio_out pins to observe PWM output.
