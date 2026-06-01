@@ -256,7 +256,28 @@ async def test_pwm_duty(dut):
     high_time = t_falling_edge - t_rising_edge1
     period = t_rising_edge2 - t_rising_edge1
     duty_cycle = (high_time / period) * 100
-    assert 49 <= int(duty_cycle) <= 51, f"Expected 50% duty cycle, got {duty_cycle}"
+    counter = 0
+    while(counter < 20):
+          # wait for rising edge
+        while (int(dut.uo_out.value) & 1) == 0:
+            await RisingEdge(dut.clk)
+        t_rising_edge1 = cocotb.utils.get_sim_time(units="sec")
+
+        # wait for falling edge
+        while (int(dut.uo_out.value) & 1) == 1:
+            await RisingEdge(dut.clk)
+        t_falling_edge = cocotb.utils.get_sim_time(units="sec")
+
+        # wait for 2nd rising edge
+        while (int(dut.uo_out.value) & 1) == 0:
+            await RisingEdge(dut.clk)
+        t_rising_edge2 = cocotb.utils.get_sim_time(units="sec")
+
+        high_time = t_falling_edge - t_rising_edge1
+        period = t_rising_edge2 - t_rising_edge1
+        duty_cycle = (high_time / period) * 100
+        assert 49 <= int(duty_cycle) <= 51, f"Expected 50% duty cycle, got {duty_cycle}"
+        counter += 1
 
     # test 0% duty cycle
     await send_spi_transaction(dut, 1, 0x04, 0x00)

@@ -22,12 +22,12 @@ module spi_module(
         if(!rst_n) begin
             sclk_ff1 <= 0;
             sclk_ff2 <= 0;
-            nCS_ff1 <= 0;
-            nCS_ff2 <= 0;
+            nCS_ff1 <= 1;
+            nCS_ff2 <= 1;
             COPI_ff1 <= 0;
             COPI_ff2 <= 0;
             prev_sclk <= 0;
-            prev_nCS <= 0;
+            prev_nCS <= 1;
             transaction_start <= 0;
             en_reg_out_7_0 <= 0;
             en_reg_out_15_8 <= 0;
