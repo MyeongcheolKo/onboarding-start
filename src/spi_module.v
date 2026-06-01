@@ -66,6 +66,7 @@ module spi_module(
                             en_reg_pwm_15_8 <= received_data[7:0];
                         7'h04:
                             pwm_duty_cycle <= received_data[7:0];
+                        default: ; // other adresses are ignored
                     endcase
                 end
             end
