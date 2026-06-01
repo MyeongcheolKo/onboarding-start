@@ -240,7 +240,7 @@ async def test_pwm_duty(dut):
             await RisingEdge(dut.clk)
         while (int(dut.uo_out.value) & 1) == 1:
             await RisingEdge(dut.clk)
-            
+
           # wait for rising edge
         while (int(dut.uo_out.value) & 1) == 0:
             await RisingEdge(dut.clk)
@@ -261,13 +261,15 @@ async def test_pwm_duty(dut):
         duty_cycle = (high_time / period) * 100
         assert 49 <= int(duty_cycle) <= 51, f"Expected 50% duty cycle, got {duty_cycle}"
 
-        # test 0% duty cycle
-        await send_spi_transaction(dut, 1, 0x04, 0x00)
+    # test 0% duty cycle
+    await send_spi_transaction(dut, 1, 0x04, 0x00)
+    for i in range(10):
         await ClockCycles(dut.clk, 30000)  # wait for long enough time
         assert (int(dut.uo_out.value) & 1) == 0, "Expected always low for 0% duty"
 
-        # test 100% duty cycle
-        await send_spi_transaction(dut, 1, 0x04, 0xFF)
+    # test 100% duty cycle
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)
+    for i in range(10):
         await ClockCycles(dut.clk, 30000) # wait for long enough time
         assert (int(dut.uo_out.value) & 1) == 1, "Expected always high for 100% duty"
 
